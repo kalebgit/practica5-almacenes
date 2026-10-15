@@ -1,0 +1,14 @@
+# Entorno virtual
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Datos (el dataset original supera los límites de GitHub)
+data/data-raw/*
+!data/data-raw/.gitkeep
+
+# Sistema
+.DS_Store
