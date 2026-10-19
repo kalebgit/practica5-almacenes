@@ -3,6 +3,7 @@
 Ejecutar desde la raíz del proyecto:
     streamlit run visualization/app.py
 """
+
 import sys
 from pathlib import Path
 

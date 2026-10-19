@@ -8,6 +8,7 @@ __pycache__/
 
 # Datos (el dataset original supera los límites de GitHub)
 data/data-raw/*
+data/data-processed/*
 !data/data-raw/.gitkeep
 
 # Sistema
