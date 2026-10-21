@@ -16,3 +16,4 @@ data/data-processed/*
 .DS_Store
 
 docs/decisiones.md
+src/eda/validacion_faltantes.py
