@@ -1,0 +1,70 @@
+/* Tema claro azul y verde: mismos colores que el dashboard y que graphs/. */
+
+:root {
+  --azul: #1f5fa8;
+  --azul-claro: #3fa9dc;
+  --verde: #00843d;
+  --texto: #2b2b2a;
+  --texto-tenue: #52514e;
+  --fondo-suave: #f2f6f9;
+
+  --r-background-color: #ffffff;
+  --r-main-color: var(--texto);
+  --r-heading-color: var(--azul);
+  --r-link-color: var(--verde);
+  --r-main-font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --r-heading-font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --r-main-font-size: 28px;
+}
+
+.reveal h2 {
+  font-size: 38px;
+  font-weight: 700;
+  border-bottom: 4px solid var(--verde);
+  padding-bottom: 0.15em;
+  margin-bottom: 0.5em;
+}
+
+.reveal .slide-number,
+.reveal .footer {
+  color: var(--texto-tenue);
+}
+
+.reveal table {
+  font-size: 0.75em;
+}
+
+.reveal table th {
+  background: var(--azul);
+  color: #ffffff;
+}
+
+.reveal table tr:nth-child(even) td {
+  background: var(--fondo-suave);
+}
+
+.reveal img {
+  border: none;
+  box-shadow: none;
+}
+
+/* Recuadro de hallazgo: lo que la audiencia debe llevarse. */
+.hallazgo {
+  border-left: 6px solid var(--verde);
+  background: var(--fondo-suave);
+  padding: 0.4em 0.8em;
+  margin-top: 0.4em;
+}
+
+/* Texto pendiente de escribir por el equipo. */
+.pendiente {
+  border: 2px dashed var(--azul-claro);
+  color: var(--azul);
+  padding: 0.3em 0.8em;
+  margin-top: 0.4em;
+}
+
+.fuente {
+  font-size: 0.55em;
+  color: var(--texto-tenue);
+}
