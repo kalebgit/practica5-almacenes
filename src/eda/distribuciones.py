@@ -109,11 +109,14 @@ def graficar_histogramas(df: pl.DataFrame) -> Path:
         ax.hist(x, bins=100, density=True, color=COLOR_DATOS, label="Datos")
         ax.plot(malla, stats.norm.pdf(malla, mu, sigma), color=COLOR_NORMAL, lw=2, label="Normal (misma media y desv.)")
         ax.set_title(f"{var}\nasimetría {stats.skew(x):.2f}")
+        ax.set_xlabel(f"Valor ({UNIDADES[var]})")
         ax.set_ylabel("Densidad")
-        
+
     axes.flat[-1].axis("off")
     axes.flat[-1].legend(*axes.flat[0].get_legend_handles_labels(), loc="center", frameon=False)
-    fig.suptitle("Distribución de las variables numéricas", color=COLOR_TEXTO)
+    fig.suptitle("Distribución de las variables numéricas (minutos con medición)\n"
+                 "Histograma de densidad y curva normal con la misma media y desviación estándar",
+                 color=COLOR_TEXTO, x=0.01, ha="left")
     fig.tight_layout()
     ruta = RUTA_GRAPHS / "distribuciones_histogramas.png"
     fig.savefig(ruta, dpi=150)
@@ -134,11 +137,13 @@ def graficar_boxplots(df: pl.DataFrame, pct: dict[str, float]) -> None:
             medianprops={"color": COLOR_TEXTO}, flierprops={"marker": "o", "markersize": 2, "markerfacecolor": COLOR_NORMAL, "markeredgecolor": "none", "alpha": 0.3},
         )
         ax.set_yticks([1], [f"{var}\n{pct[var]:.1f} % atípicos"])
-        ax.set_xlabel(UNIDADES[var], loc="right")
+        ax.set_xlabel(f"Valor ({UNIDADES[var]})", loc="right")
         ax.spines["left"].set_visible(False)
         ax.tick_params(axis="y", length=0)
+    fig.supylabel("Variable y % de valores atípicos", color=COLOR_TEXTO)
     fig.suptitle(
-        f"{orden[0]} tiene {pct[orden[0]]:.1f} % de atípicos; {orden[-1]} solo {pct[orden[-1]]:.1f} %",
+        "Diagramas de caja de las variables numéricas\n"
+        "Ordenadas por % de atípicos (criterio 1.5·IQR); cada variable en su propia escala",
         color=COLOR_TEXTO, x=0.01, ha="left",
     )
     fig.tight_layout()
