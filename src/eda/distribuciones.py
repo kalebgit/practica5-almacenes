@@ -59,6 +59,45 @@ def cargar_medidos() -> pl.DataFrame:
     return df.filter(~pl.col("medicion_faltante"))
 
 
+def resumen(df: pl.DataFrame) -> pl.DataFrame:
+    """Medidas de tendencia central y dispersión de las variables numéricas."""
+    medidas = df.select(VARIABLES_NUMERICAS)
+    moda = medidas.select(pl.all().mode().sort().first()).insert_column(0, pl.Series("statistic", ["moda"]))
+    return pl.concat([medidas.describe(), moda]).with_columns(
+        pl.col("statistic").replace({"mean": "media", "50%": "mediana"})
+    )
+
+
+def porcentaje_atipicos(df: pl.DataFrame) -> dict[str, float]:
+    """Porcentaje de valores atípicos según el criterio IQR (Q1 - 1.5·IQR, Q3 + 1.5·IQR)."""
+    pct = {}
+    for var in VARIABLES_NUMERICAS:
+        q1, q3 = df[var].quantile(0.25), df[var].quantile(0.75)
+        pct[var] = df[var].is_between(q1 - 1.5 * (q3 - q1), q3 + 1.5 * (q3 - q1)).not_().mean() * 100
+    return pct
+
+
+def efecto_escalado(df: pl.DataFrame, pct: dict[str, float]) -> pl.DataFrame:
+    """Compara min-max, (x - min) / (max - min), contra z-score, (x - media) / std:
+    la desviación estándar que deja cada uno y el rango que resulta con z-score."""
+    filas = []
+    for var in VARIABLES_NUMERICAS:
+        x = df[var]
+        minmax = (x - x.min()) / (x.max() - x.min())
+        z = (x - x.mean()) / x.std()
+        filas.append(
+            {
+                "variable": var,
+                "pct_atipicos_iqr": round(pct[var], 1),
+                "std_minmax": round(minmax.std(), 3),
+                "z_min": round(z.min(), 2),
+                "z_max": round(z.max(), 2),
+                "std_z": round(z.std(), 3),
+            }
+        )
+    return pl.DataFrame(filas).sort("pct_atipicos_iqr", descending=True)
+
+
 def graficar_histogramas(df: pl.DataFrame) -> Path:
     """Histograma (densidad) de cada variable con la normal teórica encima."""
     fig, axes = plt.subplots(2, 4, figsize=(15, 7))
@@ -82,13 +121,9 @@ def graficar_histogramas(df: pl.DataFrame) -> Path:
     return ruta
 
 
-def graficar_boxplots(df: pl.DataFrame) -> None:
-    """Boxplot por variable (cada una con su eje: sus escalas no son comparables),
-    ordenadas de más a menos atípicos (fuera de Q1 - 1.5·IQR o Q3 + 1.5·IQR)"""
-    pct = {}
-    for var in VARIABLES_NUMERICAS:
-        q1, q3 = df[var].quantile(0.25), df[var].quantile(0.75)
-        pct[var] = df[var].is_between(q1 - 1.5 * (q3 - q1), q3 + 1.5 * (q3 - q1)).not_().mean() * 100
+def graficar_boxplots(df: pl.DataFrame, pct: dict[str, float]) -> None:
+    """Boxplot horizontal de cada variable con el % de atípicos (IQR) en la etiqueta.
+    No son comparables entre variables porque las unidades son distintas."""
     orden = sorted(pct, key=pct.get, reverse=True)
 
     fig, axes = plt.subplots(len(orden), 1, figsize=(10, 9))
@@ -113,10 +148,13 @@ def graficar_boxplots(df: pl.DataFrame) -> None:
 
 def ejecutar_distribuciones() -> None:
     df = cargar_medidos()
-    print(df.select(VARIABLES_NUMERICAS).describe())
+    print(resumen(df))
+    pct = porcentaje_atipicos(df)
+    print("\nAtípicos (IQR) y efecto de min-max vs z-score:")
+    print(efecto_escalado(df, pct))
     RUTA_GRAPHS.mkdir(parents=True, exist_ok=True)
     graficar_histogramas(df)
-    graficar_boxplots(df)
+    graficar_boxplots(df, pct)
 
 if __name__ == "__main__":
     ejecutar_distribuciones()
