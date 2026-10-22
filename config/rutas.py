@@ -29,3 +29,6 @@ RUTA_PARAMS_PCA = RUTA_DATA_PROCESSED / "pca_params.csv"
 # Graficas (heatmap, scree plot, loadings, EDA). Fuera de visualization/,
 # que contiene unicamente el codigo del dashboard.
 RUTA_GRAPHS = RUTA_PROYECTO / "graphs"
+
+# Paso 8 (opcional): comparacion de muestras contra la poblacion completa.
+RUTA_MUESTREO_COMPARACION = RUTA_DATA_PROCESSED / "muestreo_comparacion.csv"

@@ -121,6 +121,7 @@ python -m src.eda.distribuciones          # 3. EDA: distribuciones y atípicos
 python -m src.cleaning.normalization      # 4. Paso 3: z-score
 python -m src.reduction.correlation       # 5. Paso 4: Pearson
 python -m src.reduction.pca               # 6. Pasos 5 y 6: PCA y dataset preparado
+python -m src.reduction.sampling          # 7. Paso 8 (opcional): muestreo
 ```
 
 | # | Script | Lee | Guarda |
@@ -131,10 +132,12 @@ python -m src.reduction.pca               # 6. Pasos 5 y 6: PCA y dataset prepar
 | 4 | `src/cleaning/normalization.py` | `consumo_limpio.csv` | `data-processed/consumo_normalizado.csv`, `data-processed/scaler_params.csv` |
 | 5 | `src/reduction/correlation.py` | `consumo_normalizado.csv`, `scaler_params.csv` | `graphs/correlacion_heatmap.png`, `graphs/correlacion_dispersion.png` |
 | 6 | `src/reduction/pca.py` | `consumo_normalizado.csv`, `scaler_params.csv` | `data-processed/consumo_preparado.csv`, `data-processed/pca_params.csv`, `graphs/pca_scree.png`, `graphs/pca_loadings.png`, `graphs/pca_proyeccion.png` |
+| 7 | `src/reduction/sampling.py` | `consumo_limpio.csv` | `data-processed/muestreo_comparacion.csv`, `graphs/muestreo_comparacion.png` |
 
 El script 1 no es obligatorio para generar los datos: solo imprime la inspección
 del archivo original que respalda las decisiones. Los que generan los CSV son el
-2, el 4 y el 6, en ese orden.
+2, el 4, el 6 y el 7, en ese orden. El 7 es el Paso 8 (opcional) y no modifica el
+dataset preparado del Paso 6.
 
 ### Dashboard
 
@@ -255,6 +258,48 @@ en `graphs/`.
   se separan por tipo de aparato, sin que el PCA conociera esas etiquetas.
 - **Hallazgo:** el PCA comprime poco (de 6 a 4 columnas) porque, tras quitar
   `global_intensity`, las variables casi no repiten información entre sí.
+
+### Muestreo (Paso 8, opcional)
+
+- Se incluye como ejercicio adicional y no modifica el dataset preparado del
+  Paso 6.
+- **Entrada:** `consumo_limpio.csv`, solo filas con medición (2,049,568 minutos);
+  muestrear apagones no aporta nada, igual criterio que en `distribuciones.py`.
+- **Variable de referencia:** `global_active_power` (kW), la más interpretable.
+- **Técnicas comparadas,** cada una con ~1 % de los minutos (~20,500):
+
+  | Muestra | n | Media (kW) | Sesgo vs. población |
+  |---|---|---|---|
+  | Población | 2,049,568 | 1.092 | — |
+  | Aleatorio simple (sin reemplazo) | 20,495 | 1.102 | +0.9 % |
+  | Aleatorio con reemplazo (bootstrap) | 20,495 | 1.101 | +0.8 % |
+  | Sistemático (k = 1,440) | 1,423 | 1.264 | **+15.8 %** |
+  | Sistemático (k = 1,427) | 1,436 | 1.056 | −3.3 % |
+  | Estratificado por mes | 20,516 | 1.086 | −0.5 % |
+
+- **Hallazgo:** el sistemático con k = 1,440 (un día completo en minutos) siempre
+  cae en la misma hora del día, así que hereda el sesgo del perfil horario
+  documentado en el EDA (hay horas pico y horas valle, no es un consumo plano).
+  Con k = 1,427 (primo, no coincide con el ciclo diario ni con el horario) el
+  sesgo prácticamente desaparece. Reproduce, con estos datos, el mismo fenómeno
+  que el ejemplo de la guía con k = 24 en datos por hora.
+- **Estratificado por mes** se eligió sobre el estratificado por otra variable
+  porque el EDA ya documentó una estacionalidad fuerte (invierno vs. verano); es
+  el que mejor conserva esa variabilidad, no solo la media global.
+- **Aleatorio con y sin reemplazo:** con una fracción chica (1 %) casi no hay
+  diferencia entre ambos (0.87 % de los minutos del bootstrap salieron más de
+  una vez). El bootstrap sirve para estimar la variabilidad de un estadístico
+  repitiendo el muestreo muchas veces, no para una sola muestra exploratoria;
+  aquí se incluye para comparar contra el aleatorio sin reemplazo, como pide
+  la guía, no porque aporte algo distinto en este caso.
+- **Cuidado con la serie de tiempo:** el aleatorio simple, el bootstrap y el
+  estratificado desordenan la cronología; no deben usarse si el muestreo se
+  fuera a incorporar al dataset final de un modelo que dependa del orden
+  temporal.
+
+[Notebook exploratorio: `notebooks/sampling.ipynb`. Script reproducible:
+`src/reduction/sampling.py`, guarda `data-processed/muestreo_comparacion.csv`
+y `graphs/muestreo_comparacion.png`.]
 
 ### Dataset final
 
